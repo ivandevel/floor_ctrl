@@ -1,7 +1,8 @@
+
 /**
   ******************************************************************************
-  * File Name          : main.c
-  * Description        : Main program body
+  * @file           : main.c
+  * @brief          : Main program body
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -60,6 +61,8 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+IWDG_HandleTypeDef hiwdg;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 
@@ -83,18 +86,20 @@ static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM3_Init(void);
-void StartDefaultTask(void const * argument);                                    
+static void MX_IWDG_Init(void);
+void StartDefaultTask(void const * argument);
+                                    
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 uint32_t pulse_width = 0;
-uint32_t Triac_angle = 9000;
-float Temperature;
+uint32_t Triac_angle = 3000;
+float Temperature = 0.0f;
 float Power = 0;
 float Setpoint = 20.0;
+uint8_t Standby = 1;
 
-float in, out, set = 45;
 // PID controllers
 struct pid_controller pidctrl;
 pid_t pid = 0;
@@ -107,7 +112,6 @@ void DisplayTask(void const * argument);
 
 #define LOWER_LIMIT 0
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-
 {
 
   if(GPIO_Pin== GPIO_PIN_9) 
@@ -126,9 +130,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 /* USER CODE END 0 */
 
+/**
+  * @brief  The application entry point.
+  *
+  * @retval None
+  */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -155,7 +163,7 @@ int main(void)
   MX_TIM1_Init();
   MX_USART2_UART_Init();
   MX_TIM3_Init();
-
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -220,8 +228,10 @@ int main(void)
 
 }
 
-/** System Clock Configuration
-*/
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
 
@@ -230,9 +240,10 @@ void SystemClock_Config(void)
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = 16;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL12;
@@ -265,6 +276,21 @@ void SystemClock_Config(void)
 
   /* SysTick_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(SysTick_IRQn, 3, 0);
+}
+
+/* IWDG init function */
+static void MX_IWDG_Init(void)
+{
+
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_32;
+  hiwdg.Init.Window = 4095;
+  hiwdg.Init.Reload = 4095;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
 }
 
 /* TIM1 init function */
@@ -307,7 +333,7 @@ static void MX_TIM1_Init(void)
   }
 
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 5000;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -372,7 +398,7 @@ static void MX_TIM3_Init(void)
   }
 
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 100;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
@@ -389,7 +415,7 @@ static void MX_USART2_UART_Init(void)
 {
 
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 38400;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -435,15 +461,15 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  
+
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LCD_CLK_Pin|LCD_SDA_Pin|LCD_CS_Pin|LCD_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LCD_CLK_Pin|LCD_SDA_Pin|LCD_CS_Pin|LCD_RST_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : LCD_CLK_Pin LCD_SDA_Pin LCD_CS_Pin LCD_RST_Pin */
   GPIO_InitStruct.Pin = LCD_CLK_Pin|LCD_SDA_Pin|LCD_CS_Pin|LCD_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ZC_IN_Pin */
@@ -451,19 +477,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ZC_IN_GPIO_Port, &GPIO_InitStruct);
-  
+
+  /*Configure GPIO pin : BUT_PLUS_Pin */
   GPIO_InitStruct.Pin = BUT_PLUS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(BUT_PLUS_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : BUT_MINUS_Pin */
   GPIO_InitStruct.Pin = BUT_MINUS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(BUT_MINUS_GPIO_Port, &GPIO_InitStruct);
-  
+
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI4_15_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
@@ -582,43 +608,42 @@ uint32_t limit=0;
 uint32_t work_time=25;	
 uint8_t buf[2];
 uint16_t* t=(uint16_t*)buf;
-uint8_t str[16];
+char str[16];
 
 int s,m,e;
 
-void getSME( unsigned int  s, unsigned int m, unsigned int  e, float number )
-{
-    unsigned int* ptr = (unsigned int*)&number;
-
-    s = *ptr >> 31;
-    e = *ptr & 0x7f800000;
-    e >>= 23;
-    m = *ptr & 0x007fffff;
-}
+//void getSME( unsigned int  s, unsigned int m, unsigned int  e, float number )
+//{
+//    unsigned int* ptr = (unsigned int*)&number;
+//
+//    s = *ptr >> 31;
+//    e = *ptr & 0x7f800000;
+//    e >>= 23;
+//    m = *ptr & 0x007fffff;
+//}
 #define N_DECIMAL_POINTS_PRECISION (1000) // n = 3. Three decimal points.
 
-
-void update_temp()
-{
-  //float spd  = 88.8;
-  
-	if ((int)temp / 10 != 0)
-		lcd_digit48( 1, 1,(int)temp / 10);
-	else
-		lcd_null48(1, 1);
-
-	lcd_digit48(27, 1, (int)temp % 10);
-
-	lcd1100_gotoxy((FONT48_WIDTH)+4, 6); //dot
-	lcd1100_write(lcd1100_DATA, 0x78);
-	lcd1100_write(lcd1100_DATA, 0x78);
-	lcd1100_write(lcd1100_DATA, 0x78);
-	lcd1100_write(lcd1100_DATA, 0x78);
-
-	lcd_digit16((FONT48_WIDTH) + 5, 5,  (int)(temp*10.0) % 10); 
-
-	//lcd1100_gotoxy((FONT48_WIDTH) + 6 + FONT16_WIDTH + 6, 6);
-}
+//void update_temp(void)
+//{
+//  //float spd  = 88.8;
+//  
+//	if ((int)temp / 10 != 0)
+//		lcd_digit48( 1, 1,(int)temp / 10);
+//	else
+//		lcd_null48(1, 1);
+//
+//	lcd_digit48(27, 1, (int)temp % 10);
+//
+//	lcd1100_gotoxy((FONT48_WIDTH)+4, 6); //dot
+//	lcd1100_write(lcd1100_DATA, 0x78);
+//	lcd1100_write(lcd1100_DATA, 0x78);
+//	lcd1100_write(lcd1100_DATA, 0x78);
+//	lcd1100_write(lcd1100_DATA, 0x78);
+//
+//	lcd_digit16((FONT48_WIDTH) + 5, 5,  (int)(temp*10.0) % 10); 
+//
+//	//lcd1100_gotoxy((FONT48_WIDTH) + 6 + FONT16_WIDTH + 6, 6);
+//}
 
 long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
@@ -647,20 +672,17 @@ void StartPwmDemo(void const * argument)
 osDelay(3000);
 #endif
 
-//Power = PIDcal(45, Temperature);
-
-//Triac_angle = map (Power, 0, 1000, 3000, 9800);
-
+if (Standby == 0) 
+{
 pid_compute(pid);
-Triac_angle = map (Power, 0, 100, 3000, 9800);
+}
+
+Triac_angle = map ((int)Power, 0, 100, 3000, 9800);
 
 osDelay(500);
 
 }
-
 }
-
-
 
 void InterfaceTask (void const * argument)
 { 
@@ -678,26 +700,12 @@ void InterfaceTask (void const * argument)
       {
         case BUT_MINUS:
           
-          Setpoint = 0;
-          
-           //lcd1100_gotoxy(11,0);
-          //sprintf(str, "%.1f\r\n", Setpoint); 
-          //lcd1100_puts(str);
-          
-//          lcd1100_gotoxy(11,2);
-//          lcd1100_puts("OFF ");
+          Standby = 1;
+          Power = 0;
           break;
           
         case BUT_PLUS:
-          
-          Setpoint = 25.0f;
-          
-          //lcd1100_gotoxy(11,0);
-          //sprintf(str, "%.1f\r\n", Setpoint); 
-          //lcd1100_puts(str);
-          
-//          lcd1100_gotoxy(11,2);
-//          lcd1100_puts("HEAT");
+          Standby = 0;
           break;
       }
        }
@@ -719,22 +727,26 @@ void InterfaceTask (void const * argument)
         case BUT_MINUS:
           
           Setpoint -= 0.5f;
-          
-//          lcd1100_gotoxy(11,0);
-//          sprintf(str, "%.1f\r\n", Setpoint);
-//          lcd1100_puts(str);
           break;
           
         case BUT_PLUS:
           
           Setpoint += 0.5f;
-          
-//          lcd1100_gotoxy(11,0);
-//          sprintf(str, "%.1f\r\n", Setpoint); 
-//          lcd1100_puts(str);
           break;
-      }
-         
+      }        
+       }
+
+     if (functButtTmp.typeNo[0] == PRESS_DOUBLE) {
+         switch (functButtTmp.buttNo[0]) 
+      {
+        case BUT_MINUS:
+          Setpoint -= 2.0f;
+          break;
+          
+        case BUT_PLUS:
+          Setpoint += 2.0f;
+          break;
+      }        
        }
        
        
@@ -748,20 +760,15 @@ void DisplayTask(void const * argument)
 {
 lcd1100_pin_init();
 lcd1100_init();
-//osDelay(500);
-//lcd1100_fill(0xFF);
-//osDelay(500);
-//lcd1100_clear();
-//osDelay(500);
-//lcd1100_test();
-//osDelay(500);
 lcd1100_clear();
-//lcd_digit48(1,1,8);
 
 //update_spd();
+__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 100);
 
 lcd1100_fill_image(troll);
-osDelay(1500);
+lcd1100_gotoxy(12,7);
+lcd1100_puts("v1.0");
+osDelay(2500);
 lcd1100_clear();
 
 lcd1100_gotoxy(1,1);
@@ -777,18 +784,18 @@ sprintf(str, "%.1f\r\n", Setpoint);
 lcd1100_puts(str);
 
 lcd1100_gotoxy(0,0);
-lcd1100_puts("[====   ]");
+lcd1100_puts("[       ]");
 
-//lcd_digit48(0,1,8);
-//lcd_digit16(5,5,8);
+Standby = 0;
 
   for (;;)
   {
-                        sprintf(str, "%d\r\n", (int)temp);
+                        lcd1100_clear();
+                        sprintf(str, "%02d\r\n", (int)Temperature);
                         lcd1100_gotoxy(1,1);
                         lcd1100_puts_big(4,8,str);
                         
-                        sprintf(str, ".%d\r\n", ((int)(temp*100)%100));
+                        sprintf(str, ".%02d\r\n", ((int)(Temperature*100)%100));
                         lcd1100_gotoxy(9,4);
                         lcd1100_puts_big(2,4, str);
                         
@@ -802,7 +809,7 @@ lcd1100_puts("[====   ]");
                         if (Power >= 70 && Power < 90 ) lcd1100_puts("[====== ]");
                         if (Power >= 90 && Power <= 100)lcd1100_puts("[=======]");
                         
-                        if (Setpoint == 0) {
+                        if (Standby == 1) {
                           lcd1100_gotoxy(11,2);
                           lcd1100_puts("OFF ");
                         } 
@@ -815,37 +822,25 @@ lcd1100_puts("[====   ]");
                           sprintf(str, "%.1f\r\n", Setpoint);
                           lcd1100_puts(str);
                         }
-
+                        
                         osDelay(500);
+                        
   }
   
   
 }
-
-
 
 /* USER CODE END 4 */
 
 /* StartDefaultTask function */
 void StartDefaultTask(void const * argument)
 {
-
   /* USER CODE BEGIN 5 */
-  float Temperature_old;
-//  while(flash_ok != HAL_OK){
-//		flash_ok = HAL_FLASH_Unlock();
-//                taskYIELD();
-//	}
-//  
-//  flash_ok = HAL_ERROR;
-//	while(flash_ok != HAL_OK){
-//		flash_ok = HAL_FLASH_Program(TYPEPROGRAM_WORD, 0x08100000, 0x8888);
-//	}
   
-  
+  //EE_Reads(0,1,Setpoint);
 
 
-status = OW_Scan(str,2);
+status = OW_Scan((uint8_t*)str,2);
 
 // Create PID controllers, set gains
 	pid = pid_create(&pidctrl, &Temperature, &Power, &Setpoint, 25, 5, 10);
@@ -854,17 +849,21 @@ status = OW_Scan(str,2);
 	// Turn on PID
 	pid_auto(pid);
 
-
   /* Infinite loop */
   for(;;)
   {
+    HAL_IWDG_Refresh(&hiwdg);
     
     OW_Send(OW_SEND_RESET, (uint8_t*)"\xcc\x44", 2, NULL, NULL, OW_NO_READ);
     
     _ow_power_pin();
     
-    osDelay(1000);
-                
+    osDelay(2000);
+   
+    //if (br_pulse == 0) br_pulse = 100; else br_pulse = 0;
+    
+    //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, br_pulse);
+    
     _ow_tx_pin();
       
     status=OW_Send(OW_SEND_RESET,(uint8_t*) "\xcc\xbe\xff\xff", 4, buf,2, 2);
@@ -874,22 +873,16 @@ status = OW_Scan(str,2);
 			t=(uint16_t*)buf;
                         
                         temp=*t*0.0625;
-                        
-                        //if (temp > 70)
-                        //{
-                        //  osDelay(100);
-                       // }
-                        
-                        //Temperature_old = temp - Temperature;
-                        
-                        //if (abs(temp - Temperature) < 10.0f) {                          
 
-                        Temperature = temp;
+                        if ((temp != 85.0f) && (temp < 125.0f) && (temp > -55.0f)) //85.0 result is not ready in sensor
+                        {
+                          Temperature = temp;
+                          //Standby = 0;
+                        }
 
-                        //}                        
+                      
 		}
                 
-
     
     
   }
@@ -898,45 +891,43 @@ status = OW_Scan(str,2);
 
 /**
   * @brief  This function is executed in case of error occurrence.
-  * @param  None
+  * @param  file: The file name as string.
+  * @param  line: The line in file as a number.
   * @retval None
   */
-void _Error_Handler(char * file, int line)
+void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   while(1) 
   {
   }
-  /* USER CODE END Error_Handler_Debug */ 
+  /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef USE_FULL_ASSERT
-
+#ifdef  USE_FULL_ASSERT
 /**
-   * @brief Reports the name of the source file and the source line number
-   * where the assert_param error has occurred.
-   * @param file: pointer to the source file name
-   * @param line: assert_param error line source number
-   * @retval None
-   */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t* file, uint32_t line)
-{
+{ 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
-
 }
-
-#endif
-
-/**
-  * @}
-  */ 
+#endif /* USE_FULL_ASSERT */
 
 /**
   * @}
-*/ 
+  */
+
+/**
+  * @}
+  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -11,7 +11,7 @@
             <name>General</name>
             <archiveVersion>3</archiveVersion>
             <data>
-                <version>29</version>
+                <version>31</version>
                 <wantNonLocal>1</wantNonLocal>
                 <debug>1</debug>
                 <option>
@@ -66,7 +66,7 @@
                 </option>
                 <option>
                     <name>OGLastSavedByProductVersion</name>
-                    <state>8.11.2.13604</state>
+                    <state>8.30.1.17146</state>
                 </option>
                 <option>
                     <name>GeneralEnableMisra</name>
@@ -112,11 +112,11 @@
                 </option>
                 <option>
                     <name>RTConfigPath2</name>
-                    <state>$TOOLKIT_DIR$\INC\c\DLib_Config_Full.h</state>
+                    <state>$TOOLKIT_DIR$\inc\c\DLib_Config_Full.h</state>
                 </option>
                 <option>
                     <name>GBECoreSlave</name>
-                    <version>25</version>
+                    <version>26</version>
                     <state>34</state>
                 </option>
                 <option>
@@ -133,7 +133,7 @@
                 </option>
                 <option>
                     <name>CoreVariant</name>
-                    <version>25</version>
+                    <version>26</version>
                     <state>34</state>
                 </option>
                 <option>
@@ -156,7 +156,7 @@
                 </option>
                 <option>
                     <name>GFPUCoreSlave2</name>
-                    <version>25</version>
+                    <version>26</version>
                     <state>34</state>
                 </option>
                 <option>
@@ -198,6 +198,15 @@
                 </option>
                 <option>
                     <name>DSPExtension</name>
+                    <state>0</state>
+                </option>
+                <option>
+                    <name>TrustZone</name>
+                    <state>0</state>
+                </option>
+                <option>
+                    <name>TrustZoneModes</name>
+                    <version>0</version>
                     <state>0</state>
                 </option>
             </data>
@@ -352,6 +361,7 @@
                     <state>$PROJ_DIR$/../Middlewares/Third_Party/one_wire</state>
                     <state>$PROJ_DIR$/../Middlewares/Third_Party/init_main</state>
                     <state>$PROJ_DIR$/../Drivers/driverbutton/Inc</state>
+                    <state>$PROJ_DIR$/../Drivers/eeprom</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -372,7 +382,7 @@
                 <option>
                     <name>CCOptStrategy</name>
                     <version>0</version>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CCOptLevelSlave</name>
@@ -435,7 +445,7 @@
                 <option>
                     <name>CCOptStrategySlave</name>
                     <version>0</version>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CCGuardCalls</name>
@@ -613,7 +623,7 @@
                 </option>
                 <option>
                     <name>AUserIncludes</name>
-                    <state>$PROJ_DIR$\..\Inc</state>
+                    <state>$PROJ_DIR$\..\\Inc</state>
                 </option>
                 <option>
                     <name>AExtraOptionsCheckV2</name>
@@ -685,7 +695,7 @@
             <name>ILINK</name>
             <archiveVersion>0</archiveVersion>
             <data>
-                <version>20</version>
+                <version>21</version>
                 <wantNonLocal>1</wantNonLocal>
                 <debug>1</debug>
                 <option>
@@ -997,6 +1007,10 @@
                     <name>IlinkLocaleSelect</name>
                     <state>1</state>
                 </option>
+                <option>
+                    <name>IlinkTrustzoneImportLibraryOut</name>
+                    <state>floorctrl_import_lib.o</state>
+                </option>
             </data>
         </settings>
         <settings>
@@ -1041,6 +1055,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\Drivers\driverbutton\Src\driverButton.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\Drivers\EEPROM\eeprom.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\Src\freertos.c</name>
@@ -1098,6 +1115,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_i2c_ex.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_iwdg.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_pwr.c</name>

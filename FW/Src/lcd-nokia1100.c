@@ -6,7 +6,7 @@
 //************************************************************************//
 
 /*
-	PIN configuration: Nokia 3510 LCD
+	PIN configuration: Nokia 3510 LCD PCF8814
 	
 	to know the pins, view the screen from front, pin 1 is on right side
 	read : http://www.circuitvalley.com/2011/09/nokia-1100-lcd-interfacing-with.html
@@ -81,11 +81,13 @@ void lcd1100_pin_init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct;
   
+  HAL_GPIO_WritePin(GPIOA, LCD_CLK_Pin|LCD_SDA_Pin|LCD_CS_Pin|LCD_RST_Pin, GPIO_PIN_SET);
+  
   lcd1100_RCC_Enable;
   /*Configure GPIO pin : LCD_RST_Pin */
   GPIO_InitStruct.Pin = lcd1100_pin_SCLK | lcd1100_pin_SDA | lcd1100_pin_CS | lcd1100_pin_RST;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(lcd1100_port, &GPIO_InitStruct);
         
@@ -97,9 +99,11 @@ void lcd1100_pin_init(void)
 void lcd1100_write(char cd, unsigned char c)
 {
 	char i;
+        //asm("nop");
 	lcd1100_CS_off;
+        //asm("nop");
 	lcd1100_SCLK_off;
-	
+	//asm("nop");
         if(cd)
 	{
 		lcd1100_SDA_on;
@@ -108,9 +112,9 @@ void lcd1100_write(char cd, unsigned char c)
 	{
 		lcd1100_SDA_off;
 	}
-        
+        //asm("nop");
 	lcd1100_SCLK_on;
-        
+        //asm("nop");
 	for(i=0; i<8; i++)
 	{
 		lcd1100_SCLK_off;
@@ -122,11 +126,13 @@ void lcd1100_write(char cd, unsigned char c)
 		{
 			lcd1100_SDA_off;
 		}
-		
+		//asm("nop");
 		c <<= 1;
                 lcd1100_SCLK_on;
 	}
+        //asm("nop");
 	lcd1100_CS_on;
+        //asm("nop");
 }
 
 void lcd_digit48(unsigned char x, unsigned char y, unsigned digit)
@@ -223,12 +229,13 @@ void lcd_contrast(uint8_t value)
 
 //	Инициализация дисплея
 void lcd1100_init(void)
-{
+{       
 	delay_lcd1100(100);
-	lcd1100_CS_off;
-	lcd1100_RST_off;
+	//lcd1100_CS_off;
+        delay_lcd1100(100);
+	//lcd1100_RST_off;
 	delay_lcd1100(100);
-	lcd1100_RST_on;
+	//lcd1100_RST_on;
 	delay_lcd1100(100);
 	 
         //NOKIA 3510 BW LCD PCF8814
@@ -353,7 +360,7 @@ void lcd1100_putch_inv(unsigned char c)
 
 //	Отправка строки на дисплей
 //	Input : s - строка
-void lcd1100_puts(unsigned char *s)
+void lcd1100_puts(char *s)
 {
 	while (*s) 
 	{
@@ -374,7 +381,7 @@ void lcd1100_puts_inv(unsigned char *s)
 //	Вывод символа на дисплей х2,4,8 размера
 //	Input : col - ширина, row - высота, c - символ в ASCII
 //	значения ширины и высоты должны быть кратны 2: 1,2,4,8
-void lcd1100_putch_big(unsigned char col,unsigned char row,unsigned char c)
+void lcd1100_putch_big(unsigned char col,unsigned char row, char c)
 {
 	unsigned char i,j,k,l,variable1,shift1,variable2,shift2,shift3,t_X,t_Y;
 	unsigned int sym,sym2;
@@ -431,7 +438,7 @@ void lcd1100_putch_big(unsigned char col,unsigned char row,unsigned char c)
 //	Вывод строки на дисплей х2,4,8 размера
 //	Input : col - ширина, row - высота, *s - ссыла на строку
 //	значения ширины и высоты должны быть кратны 2: 1,2,4,8
-void lcd1100_puts_big(unsigned char col,unsigned char row, unsigned char *s)
+void lcd1100_puts_big(unsigned char col,unsigned char row, char *s)
 {
 	while (*s) 
 	{

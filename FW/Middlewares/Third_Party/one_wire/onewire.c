@@ -27,7 +27,7 @@ static UART_HandleTypeDef _huart;//служебная переменная для
 	*/
 	GPIO_InitStruct.Pin = DQ_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;//GPIO_PULLUP
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	GPIO_InitStruct.Alternate = GPIO_AF1_USART2;
 	HAL_GPIO_Init(DQ_GPIO_Port, &GPIO_InitStruct);
@@ -41,7 +41,7 @@ static UART_HandleTypeDef _huart;//служебная переменная для
   void _ow_power_pin(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
-  
+
 	/**USART1 GPIO Configuration    
 	PA2     ------> USART1_TX 
 	*/

@@ -391,21 +391,23 @@ void lcd1100_putch_inv(unsigned char c);
 
 //	Отправка строки на дисплей
 //	Input : *s - ссыла на строку
-void lcd1100_puts(unsigned char *s);
+void lcd1100_puts(char *s);
 void lcd1100_puts_inv(unsigned char *s);
 
 //	Вывод символа на дисплей х2,4,8 размера
 //	Input : col - ширина, row - высота, c - символ в ASCII
 //	значения ширины и высоты должны быть кратны 2: 1,2,4,8
-void lcd1100_putch_big(unsigned char col,unsigned char row,unsigned char c);
+void lcd1100_putch_big(unsigned char col,unsigned char row, char c);
 
 //	Вывод строки на дисплей х2,4,8 размера
 //	Input : col - ширина, row - высота, *s - ссыла на строку
 //	значения ширины и высоты должны быть кратны 2: 1,2,4,8
-void lcd1100_puts_big(unsigned char col,unsigned char row,unsigned char *s);
+void lcd1100_puts_big(unsigned char col,unsigned char row, char *s);
 
 //	Тестовое заполнение дисплея подряд идущим символами
 void lcd1100_test(void);
+
+void lcd_digit48(unsigned char x, unsigned char y, unsigned digit);
 
 #define LCD_NOKIA1100_H_
 #endif
