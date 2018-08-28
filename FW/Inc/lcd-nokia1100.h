@@ -409,5 +409,7 @@ void lcd1100_test(void);
 
 void lcd_digit48(unsigned char x, unsigned char y, unsigned digit);
 
+void lcd1100_fill_image(uint8_t * img);
+
 #define LCD_NOKIA1100_H_
 #endif

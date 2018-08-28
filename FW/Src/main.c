@@ -54,6 +54,7 @@
 /* USER CODE BEGIN Includes */
 #include "onewire.h"
 #include "lcd-nokia1100.h"
+#include "eeprom.h"
 #include "PID.h"
 #include "driverButton.h"
 #include "math.h"
@@ -87,18 +88,24 @@ static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_IWDG_Init(void);
-void StartDefaultTask(void const * argument);
-                                    
+void StartDefaultTask(void const * argument);                                    
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 uint32_t pulse_width = 0;
 uint32_t Triac_angle = 3000;
+
 float Temperature = 0.0f;
 float Power = 0;
 float Setpoint = 20.0;
+uint16_t eeSetpoint;
 uint8_t Standby = 1;
+
+uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777};
+uint16_t VarDataTab[NB_OF_VAR] = {0, 0, 0};
+uint16_t VarValue = 0;
+
 
 // PID controllers
 struct pid_controller pidctrl;
@@ -147,7 +154,20 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  HAL_FLASH_Unlock();
+  /* EEPROM Init */
+  EE_Init();
+  
+  EE_ReadVariable(VirtAddVarTab[0], &eeSetpoint);
+  
+  if (eeSetpoint > 15 && eeSetpoint < 40)
+  {
+    Setpoint = eeSetpoint;
+  } else
+  {
+    EE_WriteVariable(VirtAddVarTab[0], 20);
+  }
+  
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -201,7 +221,7 @@ int main(void)
   osThreadDef(interfaceTask, InterfaceTask, osPriorityNormal, 0, 128);
   interfacetask = osThreadCreate(osThread(interfaceTask), NULL);
   
-  osThreadDef(displayTask, DisplayTask, osPriorityNormal, 0, 128);
+  osThreadDef(displayTask, DisplayTask, osPriorityLow, 0, 256);
   displaytask = osThreadCreate(osThread(displayTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
@@ -497,7 +517,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-const unsigned char start_logo [] = {
+const unsigned char start_logo[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F,
 0xE7, 0x1C, 0x70, 0xC0, 0x00, 0x7E, 0xEE, 0x3C, 0xF0, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -548,7 +568,7 @@ const unsigned char start_logo [] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-const unsigned char troll [] = 
+const uint8_t troll[] = 
 {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x80, 0xC0, 0xC0, 0xC0, 0xC0, 0x60, 0x60,
@@ -602,26 +622,15 @@ const unsigned char troll [] =
 };
 
 uint32_t status=0;
-float temp=0;
-float temp2=0;
-uint32_t limit=0;
-uint32_t work_time=25;	
-uint8_t buf[2];
-uint16_t* t=(uint16_t*)buf;
+float temp=0;	
 char str[16];
 
-int s,m,e;
+union {
+   uint16_t integer;
+   uint8_t  raw[2];
+} data;
 
-//void getSME( unsigned int  s, unsigned int m, unsigned int  e, float number )
-//{
-//    unsigned int* ptr = (unsigned int*)&number;
-//
-//    s = *ptr >> 31;
-//    e = *ptr & 0x7f800000;
-//    e >>= 23;
-//    m = *ptr & 0x007fffff;
-//}
-#define N_DECIMAL_POINTS_PRECISION (1000) // n = 3. Three decimal points.
+int s,m,e;
 
 //void update_temp(void)
 //{
@@ -654,7 +663,7 @@ void StartPwmDemo(void const * argument)
 {
 
   for (;;) {
- #if 0   
+#if 0   
     for (Triac_angle=3000;Triac_angle < 9800;Triac_angle+=10) 
     {
       //__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse_width);
@@ -727,11 +736,21 @@ void InterfaceTask (void const * argument)
         case BUT_MINUS:
           
           Setpoint -= 0.5f;
+          
+          eeSetpoint = (int16_t)Setpoint;
+          
+          EE_WriteVariable(VirtAddVarTab[0], eeSetpoint);
+          
           break;
           
         case BUT_PLUS:
           
           Setpoint += 0.5f;
+          
+          eeSetpoint = (int16_t)Setpoint;
+          
+          EE_WriteVariable(VirtAddVarTab[0], eeSetpoint);
+          
           break;
       }        
        }
@@ -741,10 +760,20 @@ void InterfaceTask (void const * argument)
       {
         case BUT_MINUS:
           Setpoint -= 2.0f;
+          
+          eeSetpoint = (int16_t)Setpoint;
+          
+          EE_WriteVariable(VirtAddVarTab[0], eeSetpoint);
+          
           break;
           
         case BUT_PLUS:
           Setpoint += 2.0f;
+          
+          eeSetpoint = (int16_t)Setpoint;
+          
+          EE_WriteVariable(VirtAddVarTab[0], eeSetpoint);
+          
           break;
       }        
        }
@@ -765,9 +794,9 @@ lcd1100_clear();
 //update_spd();
 __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 100);
 
-lcd1100_fill_image(troll);
-lcd1100_gotoxy(12,7);
-lcd1100_puts("v1.0");
+lcd1100_fill_image((uint8_t*)troll);
+lcd1100_gotoxy(11,7);
+lcd1100_puts("v.1.0");
 osDelay(2500);
 lcd1100_clear();
 
@@ -790,7 +819,9 @@ Standby = 0;
 
   for (;;)
   {
-                        lcd1100_clear();
+    //lcd1100_clear();
+        
+    if (Temperature <= 99.0f  &&  Temperature >= -9.0f) {
                         sprintf(str, "%02d\r\n", (int)Temperature);
                         lcd1100_gotoxy(1,1);
                         lcd1100_puts_big(4,8,str);
@@ -798,16 +829,24 @@ Standby = 0;
                         sprintf(str, ".%02d\r\n", ((int)(Temperature*100)%100));
                         lcd1100_gotoxy(9,4);
                         lcd1100_puts_big(2,4, str);
-                        
+    }
+    
+    else
+    {
+      lcd1100_gotoxy(1,1);
+      lcd1100_puts_big(4,8,"--");
+      lcd1100_gotoxy(9,4);
+      lcd1100_puts_big(2,4,".--");
+    }
                         lcd1100_gotoxy(0,0);
-                        if (Power < 10 )                lcd1100_puts("[       ]");
-                        if (Power >= 10 && Power < 20 ) lcd1100_puts("[=      ]");
-                        if (Power >= 20 && Power < 30 ) lcd1100_puts("[==     ]");
-                        if (Power >= 30 && Power < 40 ) lcd1100_puts("[===    ]");
-                        if (Power >= 40 && Power < 50 ) lcd1100_puts("[====   ]");
-                        if (Power >= 50 && Power < 70 ) lcd1100_puts("[=====  ]");
-                        if (Power >= 70 && Power < 90 ) lcd1100_puts("[====== ]");
-                        if (Power >= 90 && Power <= 100)lcd1100_puts("[=======]");
+                             if (Power >=  0 && Power < 10)  lcd1100_puts("[       ]");
+                        else if (Power >= 10 && Power < 20 ) lcd1100_puts("[=      ]");
+                        else if (Power >= 20 && Power < 30 ) lcd1100_puts("[==     ]");
+                        else if (Power >= 30 && Power < 40 ) lcd1100_puts("[===    ]");
+                        else if (Power >= 40 && Power < 50 ) lcd1100_puts("[====   ]");
+                        else if (Power >= 50 && Power < 70 ) lcd1100_puts("[=====  ]");
+                        else if (Power >= 70 && Power < 90 ) lcd1100_puts("[====== ]");
+                        else if (Power >= 90 && Power <= 100)lcd1100_puts("[=======]");                        
                         
                         if (Standby == 1) {
                           lcd1100_gotoxy(11,2);
@@ -829,7 +868,6 @@ Standby = 0;
   
   
 }
-
 /* USER CODE END 4 */
 
 /* StartDefaultTask function */
@@ -837,9 +875,8 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   
-  //EE_Reads(0,1,Setpoint);
-
-
+  //Load_User_Data();
+  
 status = OW_Scan((uint8_t*)str,2);
 
 // Create PID controllers, set gains
@@ -866,20 +903,16 @@ status = OW_Scan((uint8_t*)str,2);
     
     _ow_tx_pin();
       
-    status=OW_Send(OW_SEND_RESET,(uint8_t*) "\xcc\xbe\xff\xff", 4, buf,2, 2);
+    status=OW_Send(OW_SEND_RESET,(uint8_t*) "\xcc\xbe\xff\xff", 4, data.raw,2, 2);
 		
                 if (status==OW_OK)
-		{
-			t=(uint16_t*)buf;
-                        
-                        temp=*t*0.0625;
+		{                       
+                        temp = data.integer*0.0625;
 
-                        if ((temp != 85.0f) && (temp < 125.0f) && (temp > -55.0f)) //85.0 result is not ready in sensor
+                        if ((temp != 85.0f) && temp <= 99.0f  &&  temp >= -9.0f) //85.0 result is not ready in sensor
                         {
                           Temperature = temp;
-                          //Standby = 0;
                         }
-
                       
 		}
                 

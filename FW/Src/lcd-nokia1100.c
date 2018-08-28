@@ -211,7 +211,7 @@ void lcd1100_fill(uint8_t fillbyte)
           lcd1100_write(lcd1100_DATA, fillbyte);	
 }
 
-//	Очистка дисплея
+//	Fill LCD with byte aray image
 void lcd1100_fill_image(uint8_t * img)
 {
 	unsigned int i;      
@@ -290,7 +290,7 @@ unsigned char lcd1100_symbol_decode(unsigned char c)
 	}
 	else
 	{
-		if((192<=c)&&(c<=255))
+		if((c >= 192) && (c <= 254))
 		{
 			c=c-97;
 		}

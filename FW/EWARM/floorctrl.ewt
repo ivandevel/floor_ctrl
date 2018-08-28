@@ -1204,7 +1204,7 @@
                 <name>$PROJ_DIR$\..\Drivers\driverbutton\Src\driverButton.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Drivers\EEPROM\eeprom.c</name>
+                <name>$PROJ_DIR$\..\Src\eeprom.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\Src\freertos.c</name>
