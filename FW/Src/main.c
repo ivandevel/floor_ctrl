@@ -101,6 +101,7 @@ float Power = 0;
 float Setpoint = 20.0;
 uint16_t eeSetpoint;
 uint8_t Standby = 1;
+uint16_t eeStandby;
 
 uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777};
 uint16_t VarDataTab[NB_OF_VAR] = {0, 0, 0};
@@ -159,6 +160,7 @@ int main(void)
   EE_Init();
   
   EE_ReadVariable(VirtAddVarTab[0], &eeSetpoint);
+  EE_ReadVariable(VirtAddVarTab[1], &eeStandby);
   
   if (eeSetpoint > 15 && eeSetpoint < 40)
   {
@@ -167,6 +169,15 @@ int main(void)
   {
     EE_WriteVariable(VirtAddVarTab[0], 20);
   }
+  
+  if (eeStandby > 1)
+  {
+    EE_WriteVariable(VirtAddVarTab[1], 0);
+  } else
+  {
+    //Standby = eeStandby;
+  }
+  
   
   /* USER CODE END Init */
 
@@ -711,10 +722,20 @@ void InterfaceTask (void const * argument)
           
           Standby = 1;
           Power = 0;
+          
+          eeStandby = Standby;
+          
+          EE_WriteVariable(VirtAddVarTab[1], eeStandby);
+          
           break;
           
         case BUT_PLUS:
           Standby = 0;
+          
+          eeStandby = Standby;
+          
+          EE_WriteVariable(VirtAddVarTab[1], eeStandby);
+                   
           break;
       }
        }
@@ -815,7 +836,7 @@ lcd1100_puts(str);
 lcd1100_gotoxy(0,0);
 lcd1100_puts("[       ]");
 
-Standby = 0;
+Standby = eeStandby;
 
   for (;;)
   {
@@ -855,12 +876,12 @@ Standby = 0;
                         else 
                         {        
                           lcd1100_gotoxy(11,2);
-                          lcd1100_puts("HEAT");
-                          
+                          lcd1100_puts("HEAT");                         
+                        }
+                        
                           lcd1100_gotoxy(11,0);
                           sprintf(str, "%.1f\r\n", Setpoint);
                           lcd1100_puts(str);
-                        }
                         
                         osDelay(500);
                         
