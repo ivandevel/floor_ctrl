@@ -790,7 +790,7 @@
                     <item>VarDataTab</item>
                     <item>Setpoint</item>
                     <item>eeSetpoint</item>
-                    <item></item>
+                    <item />
                 </expressions>
                 <col-names>
                     <item>Expression</item>
