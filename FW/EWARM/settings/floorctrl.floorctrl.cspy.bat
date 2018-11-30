@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "C:\Users\User.WORK_PC\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.general.xcl" --backend -f "C:\Users\User.WORK_PC\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "C:\Users\User\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.general.xcl" --backend -f "C:\Users\User\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "C:\Users\User.WORK_PC\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.general.xcl" "--debug_file=%~1" --backend -f "C:\Users\User.WORK_PC\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "C:\Users\User\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.general.xcl" "--debug_file=%~1" --backend -f "C:\Users\User\Documents\floor_ctrl\FW\EWARM\settings\floorctrl.floorctrl.driver.xcl" 
 
 @echo off 
 :end

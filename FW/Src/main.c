@@ -752,7 +752,7 @@ __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 100);
 
 lcd1100_fill_image((uint8_t*)troll);
 lcd1100_gotoxy(11,7);
-lcd1100_puts("v.1.0");
+lcd1100_puts("v.1.1");
 osDelay(2500);
 lcd1100_clear();
 
@@ -880,7 +880,7 @@ pid_auto(pid);
                   nErrors ++;
                 }
                 
-                if (nErrors > 4) 
+                if (nErrors > 10) 
                 {
                 Standby = 1;
                 Power = 0;
