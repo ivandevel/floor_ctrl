@@ -162,7 +162,7 @@ int main(void)
   EE_ReadVariable(VirtAddVarTab[0], &eeSetpoint);
   EE_ReadVariable(VirtAddVarTab[1], &eeStandby);
   
-  if (eeSetpoint > 15 && eeSetpoint < 40)
+  if (eeSetpoint > 15 && eeSetpoint < 26)
   {
     Setpoint = eeSetpoint;
   } else
@@ -314,7 +314,7 @@ static void MX_IWDG_Init(void)
 {
 
   hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_32;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_128;
   hiwdg.Init.Window = 4095;
   hiwdg.Init.Reload = 4095;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
@@ -678,9 +678,9 @@ void InterfaceTask (void const * argument)
        if (functButtTmp.typeNo[0] == PRESS_NONE) {
          switch (functButtTmp.buttNo[0]) 
       {
-        case BUT_MINUS:
-          
-          
+        case BUT_MINUS:  
+          break;
+           case BUT_PLUS:  
           break;
       }
          
@@ -691,7 +691,9 @@ void InterfaceTask (void const * argument)
       {
         case BUT_MINUS:
           
-          Setpoint -= 0.5f;
+          Setpoint -= 1.0f;
+          
+          if (Setpoint < 10 ) Setpoint = 10;
           
           eeSetpoint = (int16_t)Setpoint;
           
@@ -701,11 +703,15 @@ void InterfaceTask (void const * argument)
           
         case BUT_PLUS:
           
-          Setpoint += 0.5f;
+          Setpoint += 1.0f;
+          
+          if (Setpoint > 26 ) Setpoint = 26;
           
           eeSetpoint = (int16_t)Setpoint;
           
-          EE_WriteVariable(VirtAddVarTab[0], eeSetpoint);
+          if (EE_WriteVariable(VirtAddVarTab[0], eeSetpoint) == PAGE_FULL) {
+            //EE_Format();
+          }
           
           break;
       }        
@@ -717,18 +723,26 @@ void InterfaceTask (void const * argument)
         case BUT_MINUS:
           Setpoint -= 2.0f;
           
+          if (Setpoint < 10 ) Setpoint = 10;
+          
           eeSetpoint = (int16_t)Setpoint;
           
-          EE_WriteVariable(VirtAddVarTab[0], eeSetpoint);
+          if (EE_WriteVariable(VirtAddVarTab[0], eeSetpoint) == PAGE_FULL) {
+            //EE_Format();
+          }
           
           break;
           
         case BUT_PLUS:
           Setpoint += 2.0f;
           
+          if (Setpoint > 26 ) Setpoint = 26;
+          
           eeSetpoint = (int16_t)Setpoint;
           
-          EE_WriteVariable(VirtAddVarTab[0], eeSetpoint);
+          if (EE_WriteVariable(VirtAddVarTab[0], eeSetpoint) == PAGE_FULL) {
+            //EE_Format();
+          }
           
           break;
       }        
@@ -752,7 +766,7 @@ __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 100);
 
 lcd1100_fill_image((uint8_t*)troll);
 lcd1100_gotoxy(11,7);
-lcd1100_puts("v.1.1");
+lcd1100_puts("v.1.2");
 osDelay(2500);
 lcd1100_clear();
 

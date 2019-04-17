@@ -267,6 +267,7 @@ uint16_t EE_Init(void)
               /* If program operation was failed, a Flash error code is returned */
               if (eepromstatus != HAL_OK)
               {
+                EE_Format();
                 return eepromstatus;
               }
             }
